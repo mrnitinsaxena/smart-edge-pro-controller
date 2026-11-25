@@ -1,0 +1,7 @@
+# Smart Edge Pro Controller - model: pro-controller (variant P4.S4: 4 relays + 4 inputs)
+# Built and published by the GitHub release workflow.
+substitutions:
+  model_id: "pro-controller"
+
+packages:
+  hardware: !include hardware/hw-2025.08.19.yaml   # board revision (pins) - it loads the shared firmware

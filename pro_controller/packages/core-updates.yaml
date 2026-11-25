@@ -1,0 +1,14 @@
+# Included when `update_manifest_url` is set (ESP Web Tools manifest.json on GitHub Pages).
+# Gives a "Firmware update" entity in Home Assistant.
+http_request:
+  verify_ssl: false             # ESP8266 cannot verify HTTPS certificates; the firmware file is checked with its MD5
+
+ota:
+  - platform: http_request
+    id: ota_http_request
+
+update:
+  - platform: http_request
+    id: firmware_update
+    name: Firmware update
+    source: ${ update_manifest_url if update_manifest_url is defined else "" }

@@ -1,0 +1,56 @@
+# ════════════════════════════════════════════════════════════════════
+#  Smart Edge Pro Controller - device config with ALL options
+#  Every value below is the default. Delete the lines you don't change.
+#  Normally you don't need this: every device runs the GitHub firmware.
+#  Use it only for a custom build (e.g. after "Adopt" in ESPHome).
+# ════════════════════════════════════════════════════════════════════
+substitutions:
+  # Model (decides which update file the device follows):
+  #   pro-controller       variant P4.S4 (4 relays, 4 switch inputs)
+  model_id: "pro-controller"
+
+  # ── Device & identity ──
+  custom_device_name: ""        # hostname; empty = pro-controller-xxxxxx (MAC suffix)
+  custom_friendly_name: ""      # name in Home Assistant; empty = "Smart Edge Pro Controller"
+  custom_area: ""               # room suggested to HA on first add, e.g. "Living Room"
+
+  # ── Network & security ──
+  wifi_ssid: ""                 # hard-coded Wi-Fi (both needed); empty = set up via the hotspot
+  wifi_password: ""
+  wifi_power_mode: "NONE"       # NONE | LIGHT | HIGH
+  api_key: ""                   # API encryption key; empty = provisioned by Home Assistant
+  web_username: ""              # web page login (both needed); empty = web page off
+  web_password: ""
+
+  # ── Channels 1-4 (names apply to both the switch input and the plug) ──
+  label_1: ""                   # empty = "Switch 1" / "Plug 1"
+  icon_1: ""                    # mdi icon name without "mdi:", e.g. "ceiling-light"
+  gpio_invert_1: "false"        # "true" if relay 1 switches the wrong way
+  label_2: ""
+  icon_2: ""
+  gpio_invert_2: "false"
+  label_3: ""
+  icon_3: ""
+  gpio_invert_3: "false"
+  label_4: ""
+  icon_4: ""
+  gpio_invert_4: "false"
+
+  # ── Logs ──
+  logger_level: "WARN"          # DEBUG | INFO | WARN | ERROR
+  usb_logs: false               # logs over the USB cable (115200 baud)
+
+  # ── Advanced: hardware pins (only change for a different board) ──
+  # DIGITAL_OUTPUT_1_PIN: "D3"
+  # DIGITAL_OUTPUT_2_PIN: "D8"
+  # DIGITAL_OUTPUT_3_PIN: "D5"
+  # DIGITAL_OUTPUT_4_PIN: "D0"
+  # DIGITAL_INPUT_1_PIN: "D1"
+  # DIGITAL_INPUT_2_PIN: "D2"
+  # DIGITAL_INPUT_3_PIN: "D6"
+  # DIGITAL_INPUT_4_PIN: "D7"
+  # STATUS_LED_PIN: "D4"
+
+packages:
+  # @v<version> = fixed release (recommended); @main = always the latest code
+  core: github://mrnitinsaxena/smart-edge-pro-controller/pro_controller/packages/core.yaml@v2026.11.25

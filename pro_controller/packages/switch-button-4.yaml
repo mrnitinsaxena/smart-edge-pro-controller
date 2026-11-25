@@ -1,0 +1,155 @@
+# 4 switch inputs and 4 relay outputs (variant P4.S4).
+# Each input mirrors its relay: relay ON while the input is ON (wall toggle switches).
+# Factory reset: within 2 minutes after power-on, 5 quick presses (on/off within 0.5 s each)
+# on any input. After those 2 minutes the pattern is ignored, so it can't happen by accident.
+# Inputs ignore changes shorter than 50 ms (switch bounce, interference on long wires).
+# Per channel you can set label_N, icon_N and gpio_invert_N in substitutions.
+globals:
+  - id: reset_window_open       # factory reset by wall switch is only accepted shortly after power-on
+    type: bool
+    initial_value: "true"
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - delay: 2min
+        - lambda: 'id(reset_window_open) = false;'
+
+binary_sensor:
+  - platform: gpio
+    name: ${ label_1 if label_1 is defined and label_1 != "" else "Switch 1" }
+    id: switch_1
+    icon: mdi:${ icon_1 if icon_1 is defined and icon_1 != "" else "light-switch" }
+    device_class: power
+    pin:
+      number: ${DIGITAL_INPUT_1_PIN}
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 50ms    # ignore switch bounce and interference on long switch wires
+    on_multi_click: &factory_reset_clicks
+      - timing:
+          - ON for at most 0.5s
+          - OFF for at most 0.5s
+          - ON for at most 0.5s
+          - OFF for at most 0.5s
+          - ON for at most 0.5s
+          - OFF for at most 0.5s
+          - ON for at most 0.5s
+          - OFF for at most 0.5s
+          - ON for at most 0.5s
+          - OFF for at most 0.5s
+        then:
+          - if:
+              condition:
+                lambda: 'return id(reset_window_open);'
+              then:
+                - logger.log:
+                    level: WARN
+                    format: "Factory reset by wall switch"
+                - switch.turn_on: device_reset
+              else:
+                - logger.log:
+                    level: WARN
+                    format: "Factory reset pattern ignored: only accepted within 2 minutes after power-on"
+    on_press:
+      - switch.turn_on: relay_1
+    on_release:
+      - switch.turn_off: relay_1
+
+  - platform: gpio
+    name: ${ label_2 if label_2 is defined and label_2 != "" else "Switch 2" }
+    id: switch_2
+    icon: mdi:${ icon_2 if icon_2 is defined and icon_2 != "" else "light-switch" }
+    device_class: power
+    pin:
+      number: ${DIGITAL_INPUT_2_PIN}
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 50ms    # ignore switch bounce and interference on long switch wires
+    on_multi_click: *factory_reset_clicks
+    on_press:
+      - switch.turn_on: relay_2
+    on_release:
+      - switch.turn_off: relay_2
+
+  - platform: gpio
+    name: ${ label_3 if label_3 is defined and label_3 != "" else "Switch 3" }
+    id: switch_3
+    icon: mdi:${ icon_3 if icon_3 is defined and icon_3 != "" else "light-switch" }
+    device_class: power
+    pin:
+      number: ${DIGITAL_INPUT_3_PIN}
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 50ms    # ignore switch bounce and interference on long switch wires
+    on_multi_click: *factory_reset_clicks
+    on_press:
+      - switch.turn_on: relay_3
+    on_release:
+      - switch.turn_off: relay_3
+
+  - platform: gpio
+    name: ${ label_4 if label_4 is defined and label_4 != "" else "Switch 4" }
+    id: switch_4
+    icon: mdi:${ icon_4 if icon_4 is defined and icon_4 != "" else "light-switch" }
+    device_class: power
+    pin:
+      number: ${DIGITAL_INPUT_4_PIN}
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on_off: 50ms    # ignore switch bounce and interference on long switch wires
+    on_multi_click: *factory_reset_clicks
+    on_press:
+      - switch.turn_on: relay_4
+    on_release:
+      - switch.turn_off: relay_4
+
+switch:
+  - platform: gpio
+    name: ${ label_1 if label_1 is defined and label_1 != "" else "Plug 1" }
+    id: relay_1
+    icon: mdi:${ icon_1 if icon_1 is defined and icon_1 != "" else "power-plug" }
+    device_class: outlet
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin:
+      number: ${DIGITAL_OUTPUT_1_PIN}
+      mode: OUTPUT
+      inverted: ${ gpio_invert_1 if gpio_invert_1 is defined else "false" }
+
+  - platform: gpio
+    name: ${ label_2 if label_2 is defined and label_2 != "" else "Plug 2" }
+    id: relay_2
+    icon: mdi:${ icon_2 if icon_2 is defined and icon_2 != "" else "power-plug" }
+    device_class: outlet
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin:
+      number: ${DIGITAL_OUTPUT_2_PIN}
+      mode: OUTPUT
+      inverted: ${ gpio_invert_2 if gpio_invert_2 is defined else "false" }
+
+  - platform: gpio
+    name: ${ label_3 if label_3 is defined and label_3 != "" else "Plug 3" }
+    id: relay_3
+    icon: mdi:${ icon_3 if icon_3 is defined and icon_3 != "" else "power-plug" }
+    device_class: outlet
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin:
+      number: ${DIGITAL_OUTPUT_3_PIN}
+      mode: OUTPUT
+      inverted: ${ gpio_invert_3 if gpio_invert_3 is defined else "false" }
+
+  - platform: gpio
+    name: ${ label_4 if label_4 is defined and label_4 != "" else "Plug 4" }
+    id: relay_4
+    icon: mdi:${ icon_4 if icon_4 is defined and icon_4 != "" else "power-plug" }
+    device_class: outlet
+    restore_mode: RESTORE_DEFAULT_OFF
+    pin:
+      number: ${DIGITAL_OUTPUT_4_PIN}
+      mode: OUTPUT
+      inverted: ${ gpio_invert_4 if gpio_invert_4 is defined else "false" }

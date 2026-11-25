@@ -1,0 +1,189 @@
+substitutions:
+  # ════════════════════════════════════════════════════════════════════
+  #  USER OPTIONS - override any of these in your device's substitutions
+  # ════════════════════════════════════════════════════════════════════
+
+  # ── Device & identity ──
+  custom_device_name: ""        # hostname; empty = pro-controller-xxxxxx (MAC suffix)
+  custom_friendly_name: ""      # name in Home Assistant; empty = "Smart Edge Pro Controller"
+  custom_area: ""               # room suggested to HA on first add, e.g. "Living Room"
+
+  # ── Network & security ──
+  wifi_ssid: ""                 # hard-coded Wi-Fi (both needed); empty = set up via the hotspot
+  wifi_password: ""
+  wifi_power_mode: "NONE"       # NONE | LIGHT | HIGH
+  api_key: ""                   # API encryption key; empty = provisioned by Home Assistant
+  web_username: ""              # web page login (both needed); empty = web page off
+  web_password: ""
+
+  # ── Channels (1-4) ── label_N: name of switch N and plug N; icon_N: mdi icon; gpio_invert_N: invert relay N
+  # label_1: "Ceiling light"
+  # icon_1: "ceiling-light"
+  # gpio_invert_1: "false"
+
+  # ── Logs ──
+  logger_level: "WARN"          # DEBUG | INFO | WARN | ERROR
+  usb_logs: false               # logs over the USB cable (115200 baud)
+
+  # ════════════════════════════════════════════════════════════════════
+  #  PRODUCT CONSTANTS - normally leave these alone
+  # ════════════════════════════════════════════════════════════════════
+  device_name: "pro-controller"
+  model: "Smart Edge Pro Controller"
+  firmware_version: "2026.11.25"
+  project_id: "Resonate to Innovate.Smart Edge Pro Controller"
+  # Model - set by each model file in pro_controller/ (decides which update file the device follows):
+  #   pro-controller       variant P4.S4 (4 relays, 4 inputs)
+  model_id: "pro-controller"
+  github_repo: "mrnitinsaxena/smart-edge-pro-controller"
+  dashboard_import_url: "github://${github_repo}/pro_controller/${model_id}.yaml@v${firmware_version}"
+  update_manifest_url: "https://mrnitinsaxena.github.io/smart-edge-pro-controller/${model_id}/manifest.json"
+
+  # Pins - defaults = board 2025.08.19 / P4.S4. Each board's file in pro_controller/hardware/ sets its own.
+  hardware_version: "2025.08.19"
+  variant: "P4.S4 (4 plugs, 4 switches)"
+  DIGITAL_OUTPUT_1_PIN: "D3"
+  DIGITAL_OUTPUT_2_PIN: "D8"
+  DIGITAL_OUTPUT_3_PIN: "D5"
+  DIGITAL_OUTPUT_4_PIN: "D0"
+  DIGITAL_INPUT_1_PIN: "D1"
+  DIGITAL_INPUT_2_PIN: "D2"
+  DIGITAL_INPUT_3_PIN: "D6"
+  DIGITAL_INPUT_4_PIN: "D7"
+  STATUS_LED_PIN: "D4"
+
+  wifi_custom_capabilities: !include
+    file: core-wifi-custom.yaml
+  area_capabilities: !include
+    file: core-area.yaml
+  api_key_capabilities: !include
+    file: core-api-key.yaml
+  web_server_capabilities: !include
+    file: core-web-server.yaml
+  dashboard_import_capabilities: !include
+    file: core-dashboard-import.yaml
+  updates_capabilities: !include
+    file: core-updates.yaml
+
+packages:
+  wifi_custom_capabilities: ${ wifi_custom_capabilities if wifi_ssid is defined and wifi_password is defined and wifi_ssid != "" and wifi_password != "" else {} }
+  api_key_capabilities: ${ api_key_capabilities if api_key is defined and api_key != "" else {} }
+  area_capabilities: ${ area_capabilities if custom_area is defined and custom_area != "" else {} }
+  web_server_capabilities: ${ web_server_capabilities if web_username is defined and web_password is defined and web_username != "" and web_password != "" else {} }
+  dashboard_import_capabilities: ${ dashboard_import_capabilities if dashboard_import_url is defined and dashboard_import_url != "" else {} }
+  updates_capabilities: ${ updates_capabilities if update_manifest_url is defined and update_manifest_url != "" else {} }
+  switch_button_4: !include switch-button-4.yaml
+
+esphome:
+  name: ${ device_name if custom_device_name is not defined or custom_device_name == "" else custom_device_name }
+  friendly_name: ${ model if custom_friendly_name is not defined or custom_friendly_name == "" else custom_friendly_name }
+  name_add_mac_suffix: ${ false if (custom_device_name is defined and custom_device_name != "") or (custom_friendly_name is defined and custom_friendly_name != "") else true }
+  project:
+    name: ${project_id}
+    version: ${firmware_version}
+  on_boot:
+    - priority: 600
+      then:
+        - text_sensor.template.publish:
+            id: hardware_version
+            state: ${hardware_version}
+        - text_sensor.template.publish:
+            id: variant
+            state: ${variant}
+
+esp8266:
+  board: d1_mini
+  restore_from_flash: true      # relays come back in their last state after a power cut
+  framework:
+    version: recommended
+
+time:
+  - platform: homeassistant     # time and time zone come from the customer's Home Assistant
+
+ota:
+  - platform: esphome
+    id: ota_esphome
+
+captive_portal:
+
+logger:
+  level: ${ "WARN" if logger_level is not defined or logger_level == "" else logger_level }
+  baud_rate: ${ 0 if (usb_logs is defined and not usb_logs) else 115200 }
+
+wifi:
+  min_auth_mode: WPA2
+  power_save_mode: ${ "NONE" if (wifi_power_mode is not defined or wifi_power_mode in ("", "NONE")) else "LIGHT" if wifi_power_mode == "LIGHT" else "HIGH" }
+  ap: {}                        # setup hotspot pro-controller-xxxxxx (open, only while not connected)
+
+api:
+  reboot_timeout: 0s            # keep switching locally even when Home Assistant is offline
+  encryption: {}
+
+binary_sensor:
+  - platform: status
+    name: "Home Assistant"
+    id: ha_api_connected
+    icon: mdi:api
+    device_class: connectivity
+    entity_category: diagnostic
+    disabled_by_default: true
+
+switch:
+  - platform: factory_reset
+    name: Factory reset
+    id: device_reset
+    entity_category: config
+
+  - platform: restart
+    name: Restart
+    id: device_restart
+    entity_category: config
+
+sensor:
+  - platform: wifi_signal
+    name: WiFi signal
+    entity_category: diagnostic
+
+  - platform: uptime
+    type: timestamp
+    name: Uptime
+    entity_category: diagnostic
+    disabled_by_default: true
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: IP address
+      id: ip_address
+      icon: mdi:ip-network
+      entity_category: diagnostic
+    ssid:
+      name: Connected WiFi
+      id: wifi_ssid_info
+      icon: mdi:access-point-network
+      entity_category: diagnostic
+    mac_address:
+      name: Mac address
+      id: mac_address
+      icon: mdi:lan
+      entity_category: diagnostic
+
+  - platform: template
+    name: Hardware version
+    id: hardware_version
+    icon: mdi:tag-check-outline
+    entity_category: diagnostic
+
+  - platform: template
+    name: Variant
+    id: variant
+    icon: mdi:cards-variant
+    entity_category: diagnostic
+
+light:
+  - platform: status_led        # on-board LED: blinks on errors/warnings (e.g. no Wi-Fi, no Home Assistant)
+    name: "Notification"
+    id: status_light
+    pin:
+      number: ${STATUS_LED_PIN}
+      inverted: true

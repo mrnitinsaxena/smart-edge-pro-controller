@@ -1,0 +1,23 @@
+# Smart Edge Pro Controller - board revision 2025.08.19 (Wemos D1 mini, ESP8266)
+# Pins of this PCB. A new board revision gets its own file next to this one
+# and its own model files, so a device only ever receives firmware built for its own pin layout.
+substitutions:
+  hardware_version: "2025.08.19"
+  variant: "P4.S4 (4 plugs, 4 switches)"   # shown as "Variant" in Home Assistant
+
+  # Relay outputs
+  DIGITAL_OUTPUT_1_PIN: "D3"    # GPIO0 - boot pin, must be high at power-on
+  DIGITAL_OUTPUT_2_PIN: "D8"    # GPIO15 - boot pin, must be low at power-on
+  DIGITAL_OUTPUT_3_PIN: "D5"
+  DIGITAL_OUTPUT_4_PIN: "D0"
+
+  # Switch inputs (to GND, internal pull-up)
+  DIGITAL_INPUT_1_PIN: "D1"
+  DIGITAL_INPUT_2_PIN: "D2"
+  DIGITAL_INPUT_3_PIN: "D6"
+  DIGITAL_INPUT_4_PIN: "D7"
+
+  STATUS_LED_PIN: "D4"          # on-board LED (active low)
+
+packages:
+  core: !include ../packages/core.yaml
